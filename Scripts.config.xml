@@ -1,0 +1,858 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Configuration xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.datacontract.org/2004/07/SecurityAssessmentTool.IndicatorsStore">
+  <Categories>
+    <Category>
+      <ID>1</ID>
+      <Name>AD Delegation</Name>
+      <Description>AD delegation is a critical part of security and compliance. By delegating control over Active Directory, you can grant users or groups permissions without adding users to privileged groups.</Description>
+      <Weight>3</Weight>
+    </Category>
+    <Category>
+      <ID>2</ID>
+      <Name>Account Security</Name>
+      <Description>Account Security indicators pertain to security weaknesses on individual accounts--built-in or otherwise, within Active Directory</Description>
+      <Weight>6</Weight>
+    </Category>
+    <Category>
+      <ID>3</ID>
+      <Name>AD Infrastructure Security</Name>
+      <Description>AD Infrastructure Security indicators pertain to the security configuration of core parts of AD's own infrastructure configuration</Description>
+      <Weight>7</Weight>
+    </Category>
+    <Category>
+      <ID>4</ID>
+      <Name>Group Policy Security</Name>
+      <Description>Group Policy Security indicators pertain to the security configuration of GPOs and their deployment within AD</Description>
+      <Weight>5</Weight>
+    </Category>
+    <Category>
+      <ID>5</ID>
+      <Name>Kerberos Security</Name>
+      <Description>Kerberos Security indicators pertain to the configuration of Kerberos capabilities on computer and user accounts within AD</Description>
+      <Weight>8</Weight>
+    </Category>
+  </Categories>
+  <Indicators>
+    <Indicator>
+      <ID>11</ID>
+      <CategoryID>1</CategoryID>
+      <Name>Normal users can add computer accounts to domain</Name>
+      <Description>By default, members of the Authenticated Users group can add up to 10 machine accounts to a domain. The ability to do this confers certain rights on those created machine accounts that can be abused by a variety of Kerberos-based attacks. As a result, if the ms-DS-MachineAccountQuota attribute on the domain naming context head is not set to 0, regular users have this ability.</Description>
+      <FilePath>Scripts\userscanaddcomputers.ps1</FilePath>
+      <Weight>3</Weight>
+      <Severity>Informational</Severity>
+      <LikelihoodOfCompromise>This is a typical (or default) domain configuration. While potentially dangerous, it does not indicate a compromise. If new systems are added to the domain that cannot be accounted for, the additional systems and the user accounts used to add them should be investigated.</LikelihoodOfCompromise>
+      <MITREATTACK>Credential Access, Lateral Movement</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>12</ID>
+      <CategoryID>1</CategoryID>
+      <Name>Guest account is enabled</Name>
+      <Description>The built-in Active Directory "guest" account allows for passwordless access to AD. In general, this account is disabled in most AD environments. This indicator checks to make sure that this account is disabled. </Description>
+      <FilePath>Scripts\GuestAccountEnabled.ps1</FilePath>
+      <Weight>2</Weight>
+      <Severity>Informational</Severity>
+      <LikelihoodOfCompromise>This is not a normal indicator of compromise, but this setting can aid attackers in enumerating accounts and performing password sprays. Abnormally high levels of failed authentication attempts could indicate an active attack.</LikelihoodOfCompromise>
+      <MITREATTACK>Discovery</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>13</ID>
+      <CategoryID>3</CategoryID>
+      <Name>Mimikatz DCShadow in use</Name>
+      <Description>Mimikatz's DCShadow switch allows a user who has compromised an AD domain, to inject arbitrary changes into AD using a "fake" domain controller. These changes bypass the security event log and can't be spotted using normal AD tools. This indicator looks for evidence that a machine has been used in this capacity.</Description>
+      <FilePath>Scripts\DCShadowInUse.ps1</FilePath>
+      <Weight>10</Weight>
+      <Severity>Critical</Severity>
+      <LikelihoodOfCompromise>Mimikatz is an environment is rarely ever a good thing. Indications of this in the domain HAVE the potential to indicate a serious compromise has either occured OR is in motion.</LikelihoodOfCompromise>
+      <MITREATTACK>Persistence, Defense Evasion</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>14</ID>
+      <CategoryID>2</CategoryID>
+      <Name>Non-standard Primary Group IDs</Name>
+      <Description>This indicator returns a list of all users with primaryGroupID different then 513 (Domain Users) or 514 (Domain Guests) or computers different from 515 (Domain Computers) or 516 (Domain Controllers). Primary Group ID can be used to grant privileged access to a security principal without explicitly adding the principal to a privileged group.</Description>
+      <FilePath>Scripts\NonStandardPGID.ps1</FilePath>
+      <Weight>8</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>Modifying the Primary Group ID is a stealthy way for an attacker to escalate privileges without triggering normal auditing for group membership changes. This should be monitored closely at all times.</LikelihoodOfCompromise>
+      <MITREATTACK>Privilege Escalation</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>15</ID>
+      <CategoryID>4</CategoryID>
+      <Name>Reversible passwords found in GPOs</Name>
+      <Description>This indicator looks for GPOs that still contain passwords that can be easily decrypted by an attacker (so called "Cpassword" entries).</Description>
+      <FilePath>Scripts\GPPrefPasswords.ps1</FilePath>
+      <Weight>8</Weight>
+      <Severity>Critical</Severity>
+      <LikelihoodOfCompromise>Many shops stopped using the feature in GP Preferences to set passwords when Microsoft deprecated the feature in Group Policy, but existing password entries may not have been removed. This area is one of the first things attackers look for when they've gained access to an AD environment.</LikelihoodOfCompromise>
+      <MITREATTACK>Credential Access</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>16</ID>
+      <CategoryID>5</CategoryID>
+      <Name>Computer or user accounts with unconstrained delegation</Name>
+      <Description>This indicator looks for computer or user accounts that have unconstrained Kerberos delegation defined. Accounts with unconstrained delegation can be more easily targeted for Kerberos-based attacks.</Description>
+      <FilePath>Scripts\ComputerUserUnconstrainedDelegation.ps1</FilePath>
+      <Weight>4</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>Identify and harden accounts if accounts are currently being used for authentication, ensure that the account activity is non-malicious and work to remediate the vulnerable configuration.</LikelihoodOfCompromise>
+      <MITREATTACK>Privilege Escalation, Credential Access, Lateral Movement</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>17</ID>
+      <CategoryID>5</CategoryID>
+      <Name>Kerberos Golden Ticket susceptibility</Name>
+      <Description>The krbtgt user account is a special (disabled) user account in every Active Directory domain, that has a special role in Kerberos function. If this account's password is compromised, so-called Golden Ticket attacks can be performed to get access to any resource in a given AD domain. This indicator looks for a krbtgt user account whose password hasn't been changed in the past 180 days. While Microsoft recommends changing the password every year, STIG recommends every 180 days.</Description>
+      <FilePath>Scripts\KerberosGoldenTicket.ps1</FilePath>
+      <Weight>4</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>This is a significant issue, but typically requires that an attacker gets access to the krbtgt hash through other compromise methods. This does not directly indicate a compromise but should be remediated.</LikelihoodOfCompromise>
+      <MITREATTACK>Privilege Escalation, Credential Access, Lateral Movement</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>18</ID>
+      <CategoryID>1</CategoryID>
+      <Name>Non default value on ms-Mcs-AdmPwd SearchFlags</Name>
+      <Description>Some flags on the ms-Mcs-AdmPwd schema may inadvertantly cause passwords to be visible to users allowing an attacker to use it as stealthy backdoor. This indicator looks for any changes to default searchFlags, which may create an exposure. Detection of changes to the default will result in a score of 80 for this indicator, signifying that a review should be conducted. Any removal of the default flags will result in a score of 0 due to their importance to security.</Description>
+      <FilePath>Scripts\LapsSearchFlagsNonDefault.ps1</FilePath>
+      <Weight>7</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>Even though schema changes are not common, a targeted schema change like this can leave the administrator passwords of 100s or 1000s of computers vulnerable to non-privileged users.</LikelihoodOfCompromise>
+      <MITREATTACK>Credential Access</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>19</ID>
+      <CategoryID>5</CategoryID>
+      <Name>Privileged users with ServicePrincipalNames defined</Name>
+      <Description>Looks for accounts with AdminCount attribute set to 1 AND ServicePrincipalNames (SPNs) defined on the account. In general, privileged accounts should not have SPNs defined on them, as it makes them targets for Kerberos-based attacks that can elevate privileges to those accounts. By default, the krbtgt account falls under this category but is a special case and is not considered part of this indicator.</Description>
+      <FilePath>Scripts\PrivilegedSPN.ps1</FilePath>
+      <Weight>5</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>This is a significant issue that can allow an attacker to elevate privileges in a domain. Audit all accounts where privileged access is possible looking for anomalous access. If found, a breach or ongoing attack should be further investigated.</LikelihoodOfCompromise>
+      <MITREATTACK>Privilege Escalation, Credential Access</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>20</ID>
+      <CategoryID>2</CategoryID>
+      <Name>Protected Users group in use</Name>
+      <Description><![CDATA[The Protected Users group was introduced in Server 2012-R2 Active Directory to minimize credential exposure for privileged accounts. A user who is in the Protected Users group gets the benefit of changes in behavior related to how their credentials are authenticated to Windows resources. These changes include no longer caching clear-text passwords, even when Windows Digest is enabled, NTLM will no longer cache clear-text passwords, and Kerberos will no longer create DES or RC4 keys. When logging into domain controllers, members of the Protected Users group will no longer authenticate via NTLM (Kerberos only), they will no longer use DES or RC4 for Kerberos pre-authentication, and cannot be delegated with constrained or unconstrained delegation. For more information, see <a href="https://docs.microsoft.com/en-us/windows-server/security/credentials-protection-and-management/protected-users-security-group">https://docs.microsoft.com/en-us/windows-server/security/credentials-protection-and-management/protected-users-security-group</a>.]]></Description>
+      <FilePath>Scripts\ProtectedUsersNotUsed.ps1</FilePath>
+      <Weight>1</Weight>
+      <Severity>Informational</Severity>
+      <LikelihoodOfCompromise>The Protected Users group provides privileged users with additional protection. Ideally, all privileged users will be members of the Protected Users group.</LikelihoodOfCompromise>
+      <MITREATTACK>Credential Access</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>21</ID>
+      <CategoryID>1</CategoryID>
+      <Name>Unprivileged users with DC Sync rights on the Domain</Name>
+      <Description>Any security principals with Replicate Changes All or Replicate Directory Changes permissions on domain naming context object can potentially retrieve password hashes for any and all users in an AD domain. Additionally, Write DACL and Owner also allows assignment of these privileges. This can then lead to all kinds of credential-theft based attacks, including Golden and Silver Ticket attacks.</Description>
+      <FilePath>Scripts\ReplicationPermissions.ps1</FilePath>
+      <Weight>8</Weight>
+      <Severity>Critical</Severity>
+      <LikelihoodOfCompromise>If a regular user account gets these privileges, it is trivial to retrieve credential material using tools like Mimikatz, for any user in a domain.</LikelihoodOfCompromise>
+      <MITREATTACK>Credential Access, Privilege Escalation</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>22</ID>
+      <CategoryID>3</CategoryID>
+      <Name>Risky RODC credential caching</Name>
+      <Description>On a per-RODC basis, you can control which security principals are allowed to replicate their credentials on an RODC when they logon. If privileged users are in the allow list, that can expose them to credential theft on these RODCs. This indicator looks for a  Password Replication Policy that allows privileged objects.</Description>
+      <FilePath>Scripts\RIskyRODCCreds.ps1</FilePath>
+      <Weight>5</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>Even if a privileged user is in the Password Replication Policy for an RODC, they still have to logon to that RODC for their password to be cached. But, given the general insecure nature of many RODCs (often at sites with poor physical security) this could be trivial to take advantage of once the credentials are cached.</LikelihoodOfCompromise>
+      <MITREATTACK>Credential Access</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>23</ID>
+      <CategoryID>3</CategoryID>
+      <Name>Well-known privileged SIDs in sIDHistory</Name>
+      <Description>This indicator looks for all security principals that contain the SIDs of privileged accounts within the sIDHistory attribute. This would allow those security principals to have the same privileges as those privileged accounts, but in a way that is not obvious to see (e.g. through group membership).</Description>
+      <FilePath>Scripts\SIDHistoryPrivilegedSID.ps1</FilePath>
+      <Weight>7</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>Writing to sIDHistory requires special privileges. Therefore, anyone who can write to the sIDHistory attribute has likely compromised the domain already, but this method for gaining persistence can be very effective, given the difficulty administrators will have in seeing these kinds of privileged escalations.</LikelihoodOfCompromise>
+      <MITREATTACK>Persistence, Privilege Escalation</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>24</ID>
+      <CategoryID>2</CategoryID>
+      <Name>Unprivileged users as DNS Admins</Name>
+      <Description>This indicator looks for any member of the DnsAdmins group that is not a privileged user. DnsAdmins itself is not considered a privileged group and is not protected by the AdminSDHolder SDProp mechanism. However as some research has shown, a member of this group can remotely load a DLL onto a domain controller running DNS and execute code as SYSTEM.</Description>
+      <FilePath>Scripts\UnprivilegedDNSAdmin.ps1</FilePath>
+      <Weight>7</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>Administration of DNS is often delegated to non-AD administrators (i.e., administrators with job responsibilities in networking, DNS, DHCP, etc.). These administration accounts may not have the same security controls as the AD administrator accounts, making them prime targets for compromise.</LikelihoodOfCompromise>
+      <MITREATTACK>Execution, Privilege Escalation</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>25</ID>
+      <CategoryID>1</CategoryID>
+      <Name>Privileged objects with unprivileged owners</Name>
+      <Description>If a privileged object (as determined by adminCount=1) is owned by an account that is unprivileged, then any compromise of that unprivileged account could result in those privileged objects' delegation being modified, since owners can override any delegation on an object, if only temporarily.</Description>
+      <FilePath>Scripts\UnprivilegedOwner.ps1</FilePath>
+      <Weight>6</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>Most privileged objects are owned by privileged groups or users. But if a privileged object were to be owned by an unprivileged account, it could be easily taken over. And even though SDProp might correct any delegation done by an attacker who has compromised an owner, the attacker could have up to 1 hour to perform any changes on the privileged object (e.g. group membership changes or password changes) before SDProp corrects it.</LikelihoodOfCompromise>
+      <MITREATTACK>Privilege Escalation</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>26</ID>
+      <CategoryID>2</CategoryID>
+      <Name>Users with risky User Account Control</Name>
+      <Description>This indicator identifies user accounts where the Password Not Required, Trusted for Delegation, Passwords Encrypted with DES, Passwords with reversible encryption, or Trusted to Authenticate for Delegation flags are set.</Description>
+      <FilePath>Scripts\UsersRiskyAccountControl.ps1</FilePath>
+      <Weight>3</Weight>
+      <Severity>Informational</Severity>
+      <LikelihoodOfCompromise>If the account is new it could indicate a compromise. If this is not new, clean up the legacy systems, accounts, and settings. </LikelihoodOfCompromise>
+      <MITREATTACK>Privilege Escalation, Lateral Movement</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>27</ID>
+      <CategoryID>2</CategoryID>
+      <Name>Users with Kerberos pre-authentication disabled</Name>
+      <Description><![CDATA[This indicator looks for users with Kerberos pre-authentication disabled, which can be targeted for ASREP-Roasting attacks (like 'Keberoasting'). For more information, see <a href="https://social.technet.microsoft.com/wiki/contents/articles/23559.kerberos-pre-authentication-why-it-should-not-be-disabled.aspx">https://social.technet.microsoft.com/wiki/contents/articles/23559.kerberos-pre-authentication-why-it-should-not-be-disabled.aspx</a>.]]></Description>
+      <FilePath>Scripts\UsersWithPreAuth.ps1</FilePath>
+      <Weight>5</Weight>
+      <Severity>Informational</Severity>
+      <LikelihoodOfCompromise>If an account has Kerberos pre-authentication disabled, it makes it easier for attackers to send dummy requests to a DC to try and crack its Ticket Granting Ticket (TGT).</LikelihoodOfCompromise>
+      <MITREATTACK>Privilege Escalation, Credential Access, Lateral Movement</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>28</ID>
+      <CategoryID>2</CategoryID>
+      <Name>Built-in domain Administrator account used within the last two weeks.</Name>
+      <Description>This indicator checks to see if the lastLogonTimestamp for the built-in domain Administrator account has been updated within the last two weeks. If so, it could indicate that the user has been compromised.</Description>
+      <FilePath>Scripts\AdminUsedRecently.ps1</FilePath>
+      <Weight>5</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>If best practices are followed, this account should not be used regularly, if at all. This indicator failing could indicate a compromise. Ensure any logins to the built-in domain Administrator account are legitimate and accounted for. If not accounted for, a breach is extremely likely.</LikelihoodOfCompromise>
+      <MITREATTACK>Defense Evasion</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>29</ID>
+      <CategoryID>2</CategoryID>
+      <Name>Users with Password Never Expires flag set</Name>
+      <Description>This indicator identifies user accounts where the Password Never Expires flag is set. These accounts can be targets for brute force password attacks, given that their passwords may not be strong when they were set. These accounts also tend to be service accounts with privileged access to applications and services, including Kerberos-based services.</Description>
+      <FilePath>Scripts\UsersPwdNeverExpires.ps1</FilePath>
+      <Weight>1</Weight>
+      <Severity>Informational</Severity>
+      <LikelihoodOfCompromise>This is not a normal indicator of compromise. If the account is new and cannot be accounted for by administrators, then the account should be investigated.</LikelihoodOfCompromise>
+      <MITREATTACK>Credential Access</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>30</ID>
+      <CategoryID>3</CategoryID>
+      <Name>Anonymous access to Active Directory enabled</Name>
+      <Description>It is possible, though not recommended, to enable anonymous access to AD. This indicator looks for the presence of the flag that enables anonymous access. Anonymous access would allow unauthenticated users to query AD.</Description>
+      <FilePath>Scripts\AnonAccessonAD.ps1</FilePath>
+      <Weight>7</Weight>
+      <Severity>Critical</Severity>
+      <LikelihoodOfCompromise>This does not by itself indicate a breach. Anonymous access to Active Directory allows an attacker to enumerate accounts and perform attacks like password sprays and also enumerate the domain to gather information that can model attack paths.</LikelihoodOfCompromise>
+      <MITREATTACK>Initial Access, Discovery</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>31</ID>
+      <CategoryID>5</CategoryID>
+      <Name>Computer account takeover through Kerberos resource-based constrained delegation (RBCD)</Name>
+      <Description>With sufficient permissions on a computer account and the ability to create another user or computer security principal, it is possible to compromise resources on that computer account using Kerberos resource-based constrained delegation (RBCD). This indicator looks for changes made to the msDS-AllowedToActOnBehalfOfOtherIdentity attribute on computer objects within the last n days to discover if this takeover activity is happening.</Description>
+      <FilePath>Scripts\rbcd.ps1</FilePath>
+      <Weight>5</Weight>
+      <Severity>Informational</Severity>
+      <LikelihoodOfCompromise>Identify Kerberos resource-based constrained delegation (RBCD) use requirements and ensure that any credential delegation observed is legitimate and expected.</LikelihoodOfCompromise>
+      <MITREATTACK>Privilege Escalation, Credential Access, Lateral Movement</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>32</ID>
+      <CategoryID>4</CategoryID>
+      <Name>Weak GPO linking delegation at the domain level</Name>
+      <Description>When non-privileged users can link GPOs at the domain level, they have the ability to effect change across all users and computers in the domain as well as potentially elevate access and change domain-wide security posture. This indicator looks for non-privileged principals who have write permissions on the GPLink attribute or Write DACL/Write Owner on the object.</Description>
+      <FilePath>Scripts\WeakGPOLinkingOnDomain.ps1</FilePath>
+      <Weight>7</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>Just being able to link GPOs doesn't provide the whole picture. An attacker would need to find or edit a GPO that contains the instructions they want to achieve. However, if an attacker can find an existing GPO that meets their needs, then having this write permission gives them the keys to the kingdom.</LikelihoodOfCompromise>
+      <MITREATTACK>Privilege Escalation, Execution</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>33</ID>
+      <CategoryID>2</CategoryID>
+      <Name>Recent privileged account creation activity</Name>
+      <Description>This indicator looks for any users or groups that were created within the last month. Privileged accounts and groups are defined by having their adminCount attribute set to 1.</Description>
+      <FilePath>Scripts\NewPrivilegedUsers.ps1</FilePath>
+      <Weight>3</Weight>
+      <Severity>Informational</Severity>
+      <LikelihoodOfCompromise>In most environments, creation of privileged accounts and groups is tightly controlled and audited. This indicator provides a backstop to that process that allows users to visually inspect whether privileged accounts and groups are being created without prior knowledge.</LikelihoodOfCompromise>
+      <MITREATTACK>Persistence</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>34</ID>
+      <CategoryID>2</CategoryID>
+      <Name>Unprotected accounts with adminCount=1</Name>
+      <Description>This indicator looks for any users or groups that may have been under the control of SDProp (adminCount=1) but are no longer members of privileged groups and should not be considered privileged.</Description>
+      <FilePath>Scripts\NonProtectedObjectsWithAdminCount.ps1</FilePath>
+      <Weight>3</Weight>
+      <Severity>Informational</Severity>
+      <LikelihoodOfCompromise>While it's not likely that accounts with adminCount set to 1 will be used in a compromise, it can cause confusion when assessing accounts that have privileged access in the environment.</LikelihoodOfCompromise>
+      <MITREATTACK>Privilege Escalation</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>35</ID>
+      <CategoryID>1</CategoryID>
+      <Name>Changes to MS LAPS read permissions</Name>
+      <Description><![CDATA[This indicator looks for permissions on computer accounts that could allow inadvertent exposure of local administrator accounts in environments that use the Microsoft LAPS solution (<a href="https://www.microsoft.com/en-us/download/details.aspx?id=46899">https://www.microsoft.com/en-us/download/details.aspx?id=46899</a>). These permissions include Read acces to ms-mcs-admpwd as well as Write DACL and Owner (which would allow provisiong the read access). LAPS provides a way for you to rotate local administrator account passwords on your servers and workstations.]]></Description>
+      <FilePath>Scripts\ObjectsWithLapsRead.ps1</FilePath>
+      <Weight>3</Weight>
+      <Severity>Informational</Severity>
+      <LikelihoodOfCompromise>Only authorized administrative users should have access to LAPS passwords. Other users may use this capability to laterally move through a domain using local compromised administrator accounts.</LikelihoodOfCompromise>
+      <MITREATTACK>Credential Access, Lateral Movement</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>36</ID>
+      <CategoryID>3</CategoryID>
+      <Name>Zerologon vulnerability</Name>
+      <Description>This indicator looks for security vulnerability to CVE-2020-1472, which was patched by Microsoft in August 2020. Without this patch, an unauthenticated attacker can exploit CVE-2020-1472 to elevate their privileges and get administrative access on the domain.</Description>
+      <FilePath>Scripts\ZerologonTester.ps1</FilePath>
+      <Weight>10</Weight>
+      <Severity>Critical</Severity>
+      <LikelihoodOfCompromise>While this exploit was patched by Microsoft, unpatched domain controllers still exist and there is exploit code in the wild that is actively taking advantage of this vulnerability.</LikelihoodOfCompromise>
+      <MITREATTACK>Privilege Escalation</MITREATTACK>
+      <Selected>0</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>37</ID>
+      <CategoryID>2</CategoryID>
+      <Name>Users with old passwords</Name>
+      <Description>This indicator looks for user accounts whose password has not changed in over 180 days. This could make these account ripe for password guessing attacks.</Description>
+      <FilePath>Scripts\oldPwdLastSet.ps1</FilePath>
+      <Weight>3</Weight>
+      <Severity>Informational</Severity>
+      <LikelihoodOfCompromise>While a user account whose password hasn't changed in a while isn't in and of itself risky, it could be a target for attackers looking for service accounts or other privileged accounts that may have weaker passwords that have not been required to change.</LikelihoodOfCompromise>
+      <MITREATTACK>Discovery</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>38</ID>
+      <CategoryID>2</CategoryID>
+      <Name>Enabled admins that are inactive</Name>
+      <Description>This indicator looks for admin accounts that are enabled, but have not  logged in for the past 90 days. Attackers who can compromise these accounts may be able to operate unnoticed.</Description>
+      <FilePath>Scripts\EnabledAdminsNotInUse.ps1</FilePath>
+      <Weight>4</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>While the presence of an unused admin account is not automatically a problem, removing these accounts reduces the attack surface of AD.</LikelihoodOfCompromise>
+      <MITREATTACK>Discovery</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>39</ID>
+      <CategoryID>2</CategoryID>
+      <Name>Privileged users that are disabled</Name>
+      <Description>This indicator looks for privileged user accounts, as indicated by their adminCount attribute set to 1, that are disabled. If a privileged account is disabled, it should be removed from its privileged group(s) to prevent inadvertent misuse.</Description>
+      <FilePath>Scripts\DisabledPrivilegedUsers.ps1</FilePath>
+      <Weight>3</Weight>
+      <Severity>Informational</Severity>
+      <LikelihoodOfCompromise>When a user is disabled, it tends to not be monitored as closely as active accounts. If this user is also a privileged user, then it becomes a target for takeover if an attacker can enable the account.</LikelihoodOfCompromise>
+      <MITREATTACK>Privilege Escalation</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>40</ID>
+      <CategoryID>4</CategoryID>
+      <Name>Weak GPO linking delegation at the Domain Controllers OU level</Name>
+      <Description>When non-privileged users can link GPOs at the Domain Controllers OU level, they have the ability to effect change on domain controllers as well as potentially elevate access and change domain-wide security posture. This indicator looks for non-privileged principals who have write permissions on the GPLink attribute or Write DACL/Write Owner on the object.</Description>
+      <FilePath>Scripts\WeakGPOLinkingOnDCOU.ps1</FilePath>
+      <Weight>7</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>Just being able to link GPOs doesn't provide the whole picture. An attacker would need to find or edit a GPO that contains the instructions they want to achieve. However, if an attacker can find an existing GPO that meets their needs, then having this write permission gives them the keys to the kingdom.</LikelihoodOfCompromise>
+      <MITREATTACK>Privilege Escalation, Execution</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>41</ID>
+      <CategoryID>4</CategoryID>
+      <Name>Weak GPO linking delegation at the AD Site level</Name>
+      <Description>When non-privileged users can link GPOs at the AD Site level, they have the ability to effect change on domain controllers as well as potentially elevate access and change domain-wide security posture. This indicator looks for non-privileged principals who have write permissions on the GPLink attribute or Write DACL/Write Owner on the object.</Description>
+      <FilePath>Scripts\WeakGPOLinkingADSite.ps1</FilePath>
+      <Weight>7</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>Just being able to link GPOs doesn't provide the whole picture. An attacker would need to find or edit a GPO that contains the instructions they want to achieve. However, if an attacker can find an existing GPO that meets their needs, then having this write permission gives them the keys to the kingdom.</LikelihoodOfCompromise>
+      <MITREATTACK>Privilege Escalation, Execution</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>42</ID>
+      <CategoryID>5</CategoryID>
+      <Name>Users with SPNs defined</Name>
+      <Description>This indicator provides a way to visually inventory all users accounts that have SPNs defined. Generally SPNs are only defined for "Kerberized" services, so if you see an account with an SPN that should not have one, this could be cause for concern.</Description>
+      <FilePath>Scripts\PrimaryUsersWithSPN.ps1</FilePath>
+      <Weight>3</Weight>
+      <Severity>Informational</Severity>
+      <LikelihoodOfCompromise>SPNs are generally only defined for service accounts or other services that use Kerberos. If you see it on other accounts, they are worth investigating but it could just be an administrative error.</LikelihoodOfCompromise>
+      <MITREATTACK>Privilege Escalation</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>43</ID>
+      <CategoryID>2</CategoryID>
+      <Name>Privileged group membership changes in the last 7 days</Name>
+      <Description>This indicator looks for changes to the built-in privileged groups within the last 7 days, which could indicate attempts to escalate privilege.</Description>
+      <FilePath>Scripts\PrivilegedGroupChanges.ps1</FilePath>
+      <Weight>5</Weight>
+      <Severity>Informational</Severity>
+      <LikelihoodOfCompromise>Recent additions or deletions to privileged group members could be normal operational changes or could indicate attempts at peristence or cleaning up of tracks after an attack (e.g. detection of temporary group membership changes).</LikelihoodOfCompromise>
+      <MITREATTACK>Discovery, Privilege Escalation</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>44</ID>
+      <CategoryID>2</CategoryID>
+      <Name>AD objects created within the last 10 days</Name>
+      <Description>This indicator looks for any AD objects that were created within the last 10 days.</Description>
+      <FilePath>Scripts\NewObjects.ps1</FilePath>
+      <Weight>1</Weight>
+      <Severity>Informational</Severity>
+      <LikelihoodOfCompromise>In some environments, object creation happens constantly and so finding illegitmate accounts is a process of seeing the recent accounts and ensuring that all look normal.</LikelihoodOfCompromise>
+      <MITREATTACK>Discovery</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>46</ID>
+      <CategoryID>1</CategoryID>
+      <Name>Objects in built-in protected groups without admincount=1 (SDProp)</Name>
+      <Description><![CDATA[This indicator looks for objects in built-in protected groups with AdminCount not equal to 1. AdminCount is an object flag that is set by the SDProp process (run by default every 60 minutes) if  that object's DACLs are modified to sync with the AdminSDHolder object through inheritance. If an object within these groups has an AdminCount not equal to 1 then it could signify that the DACLs were manually set (no inheritance) or that there is an issue with SDProp. For more information see: <a href="https://docs.microsoft.com/en-us/previous-versions/technet-magazine/ee361593(v=msdn.10)">https://docs.microsoft.com/en-us/previous-versions/technet-magazine/ee361593(v=msdn.10)</a>]]></Description>
+      <FilePath>Scripts\ObjectsInProtectedGroupWithoutAdmincount.ps1</FilePath>
+      <Weight>4</Weight>
+      <Severity>Informational</Severity>
+      <LikelihoodOfCompromise>While not immediately indicative of an attack, privileged users that are not clearly marked as such (using the AdminCount flag) represent an exposure in that they may be used nefariously without being detected. Additionally, an attacker may add a privileged account and attempt to hide it using this method.</LikelihoodOfCompromise>
+      <MITREATTACK>Credential Access</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>47</ID>
+      <CategoryID>1</CategoryID>
+      <Name>Default security descriptor schema changes in the last 90 days</Name>
+      <Description>This indicator detects changes made to the default security descriptor schema in the last 90 days. If an attacker gets access to the schema instance in a given forest, they can make changes to the defaultSecurityDescriptor attribute on any AD object class. These changes would then propagate as new default Access Control Lists (ACLs) on any newly created object in AD, potentially weakening AD security posture.</Description>
+      <FilePath>Scripts\ChangesToDefaultSD.ps1</FilePath>
+      <Weight>7</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>Changes to the default security descriptor are not common. An admin should know that the change was made and be able to articulate the reason for the change. If the change was not intentional, the likelihood of compromise is very high. The chances of compromise are lower if the change hardens the setting instead of weakening it.</LikelihoodOfCompromise>
+      <MITREATTACK>Persistence, Lateral Movement, Defense Evasion</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>48</ID>
+      <CategoryID>4</CategoryID>
+      <Name>Changes to Default Domain Policy or Default Domain Controllers Policy in the last 7 days</Name>
+      <Description>The Default Domain Policy and Default Domain Controllers Policy GPOs are special objects within AD, and control domain-wide and Domain Controller wide security settings. This indicator looks for changes to these two special GPOs within the last 7 days.</Description>
+      <FilePath>Scripts\ChangesToDomainOrDCPolicies.ps1</FilePath>
+      <Weight>4</Weight>
+      <Severity>Informational</Severity>
+      <LikelihoodOfCompromise>Changes to the Default Domain Policy or Default Domain Controllers Policy should be accounted for by the administrators. If the change can not be accounted for, invstigate the change looking for potential weakening of security posture and why the change was made.</LikelihoodOfCompromise>
+      <MITREATTACK>Privilege Escalation, Execution</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>49</ID>
+      <CategoryID>2</CategoryID>
+      <Name>Built-in domain Administrator account password not changed within last 6 months</Name>
+      <Description>This indicator checks to see if the pwdLastSet attribute on the built-in domain Administrator account has been changed within the last 6 months</Description>
+      <FilePath>Scripts\AdminPWNotChanged.ps1</FilePath>
+      <Weight>4</Weight>
+      <Severity>Informational</Severity>
+      <LikelihoodOfCompromise>If the built-in domain Administrator account is not being changed on a regular basis, this account can be vulnerable to brute force password attacks.</LikelihoodOfCompromise>
+      <MITREATTACK>Credential Access</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>50</ID>
+      <CategoryID>1</CategoryID>
+      <Name>Domain Controller owner permissions</Name>
+      <Description>This indicator looks for Domain Controller computer accounts whose owner is not a Domain Admins, Enterprise Admins, or built-in Administrator account, since control of DC machine accounts allows for an easy path to compromising the domain.</Description>
+      <FilePath>Scripts\DomainControllerOwnerPermissions.ps1</FilePath>
+      <Weight>6</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>While Domain Controller objects are typically created during DCPromo by privileged accounts, if an accidental ownership change occurs on a DC object, it can have large consequences for security of the domain, since object owners can change permissions on the object to perform any number of actions.</LikelihoodOfCompromise>
+      <MITREATTACK>Privilege Escalation, Credential Access</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>51</ID>
+      <CategoryID>3</CategoryID>
+      <Name>Domains with obsolete functional levels</Name>
+      <Description>This indicator looks for AD domains that have a domain functional level set to Windows Server 2012 or lower. These lower functional levels mean that newer security features available in AD cannot be leveraged. If the OS version of your domain controllers supports it, you should update to a newer domain functional level to take full advantage of security advancements in AD.</Description>
+      <FilePath>Scripts\DomainObsoleteFunctionalLevel.ps1</FilePath>
+      <Weight>3</Weight>
+      <Severity>Informational</Severity>
+      <LikelihoodOfCompromise>While domain functional level is not a weakness in and of itself, an attacker with knowledge of funtional levels can adjust their approach to take advantage of lack of security features in AD.</LikelihoodOfCompromise>
+      <MITREATTACK>Reconnaissance</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>52</ID>
+      <CategoryID>3</CategoryID>
+      <Name>Anonymous NSPI access to AD enabled</Name>
+      <Description>Anonymous name service provider interface (NSPI) access on AD is a feature that allows anonymous RPC-based binds to AD. This indicator detects when NSPI access is enabled.</Description>
+      <FilePath>Scripts\AnonNSPIAccess.ps1</FilePath>
+      <Weight>6</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>NSPI access is rarely ever enabled so if you find it enabled, this should be a cause for concern.</LikelihoodOfCompromise>
+      <MITREATTACK>Initial Access</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>53</ID>
+      <CategoryID>3</CategoryID>
+      <Name>Operator groups no longer protected by AdminSDHolder and SDProp</Name>
+      <Description>This indicator checks if dwAdminSDExMask mask on dsHeuristics has been set, which indicates a change to the SDProp behavior that could compromise security.</Description>
+      <FilePath>Scripts\dwAdminSDExMaskSet.ps1</FilePath>
+      <Weight>5</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>Normally the default behavior for AdminSDHolder SDProp should be left intact. If its behavior is modified, this could indicate an attempt at defense evasion.</LikelihoodOfCompromise>
+      <MITREATTACK>Defense Evasion</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>54</ID>
+      <CategoryID>3</CategoryID>
+      <Name>Computers with older OS versions</Name>
+      <Description>This indicator looks for machine accounts that are running versions of Windows older than Server 2012-R2 and Windows 8.1</Description>
+      <FilePath>Scripts\CompObsoleteOS.ps1</FilePath>
+      <Weight>2</Weight>
+      <Severity>Informational</Severity>
+      <LikelihoodOfCompromise>Computers running older and unsupported OS versions could be targeted with known or unpatched exploits.</LikelihoodOfCompromise>
+      <MITREATTACK>Reconnaissance</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>55</ID>
+      <CategoryID>1</CategoryID>
+      <Name>Permission changes on AdminSDHolder object</Name>
+      <Description>This indicator looks for Access Control List (ACL) changes on the AdminSDHolder object, which could indicate an attempt to modify permissions on privileged objects that are subject to AdminSDHolder (e.g. users or groups with AdminCount=1).</Description>
+      <FilePath>Scripts\AdminSDHolderPermissionChange.ps1</FilePath>
+      <Weight>10</Weight>
+      <Severity>Critical</Severity>
+      <LikelihoodOfCompromise>Changes to the AdminSDHolder object are very rare. An admin should know that the change was made and be able to articulate the reason for the change. If the change was not intentional, the likelyhood of compromise is very high.</LikelihoodOfCompromise>
+      <MITREATTACK>Privilege Escalation, Defense Evasion</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>56</ID>
+      <CategoryID>1</CategoryID>
+      <Name>Enterprise Key Admins with full access to domain</Name>
+      <Description>This indicator looks for evidence of a bug in certain versions of Windows Server 2016 Adprep that granted undue access to the Enterprise Key Admins group.</Description>
+      <FilePath>Scripts\EnterpriseKeyAdminsFullControl.ps1</FilePath>
+      <Weight>7</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>This issue was corrected in a  subsequent release of Server 2016 and may not exist in your environment, but checking for it is definitely warranted, since it grants this group the ability to replicate all changes from AD (DCSync Attack).</LikelihoodOfCompromise>
+      <MITREATTACK>Privilege Escalation, Credential Access, Lateral Movement</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>57</ID>
+      <CategoryID>5</CategoryID>
+      <Name>Objects with Constrained Delegation Configured</Name>
+      <Description>This indicator looks for any objects that have values in the msDS-AllowedToDelegateTo attribute (i.e. Constrained Delegation) and does not have the UserAccountControl bit for protocol transition set.</Description>
+      <FilePath>Scripts\ObjectsWithConstrainedDelegation.ps1</FilePath>
+      <Weight>5</Weight>
+      <Severity>Informational</Severity>
+      <LikelihoodOfCompromise>While constrained delegation is less likely to be compromised than unconstrained delegation, knowing all of the accounts within your environment that have this defined and ensuring they have strong passwords is a good thing.</LikelihoodOfCompromise>
+      <MITREATTACK>Privilege Escalation</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>58</ID>
+      <CategoryID>5</CategoryID>
+      <Name>Kerberos Protocol Transition Delegation Configured</Name>
+      <Description>This indicator looks for services that have been configured to allow Kerberos protocol transition. This capability basically says that a delegated service can use any available authentication protocol. This means that compromised services can reduce the quality of their authentication protocol to something that is more easily compromised (e.g. NTLM).</Description>
+      <FilePath>Scripts\ObjectsWithProtocolTranistion.ps1</FilePath>
+      <Weight>6</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>Protocol transition is not often used but when it is, it should be monitored closely for signs of abuse.</LikelihoodOfCompromise>
+      <MITREATTACK>Credential Access</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>59</ID>
+      <CategoryID>3</CategoryID>
+      <Name>Computers with password last set over 90 days ago</Name>
+      <Description>This indicator looks for computer accounts that have not automatically rotated their passwords. These passwords should be changed automatically every 30 days by default.</Description>
+      <FilePath>Scripts\CompOldPwdLastSet.ps1</FilePath>
+      <Weight>6</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>Computer accounts should automatically rotate their passwords every 30 days, objects that are not doing this could show evidence of tampering.</LikelihoodOfCompromise>
+      <MITREATTACK>Credential Access</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>60</ID>
+      <CategoryID>2</CategoryID>
+      <Name>Recent SidHistory changes on objects</Name>
+      <Description>This indicator detects any recent changes to sIDHistory on objects, including changes to non-privileged accounts where privileged SIDs are added.</Description>
+      <FilePath>Scripts\RecentSIDHistoryChanges.ps1</FilePath>
+      <Weight>5</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>Attackers need privileged access to AD to  be able to write to SIDHstory but if such rights exist, writing privileged SIDs to regular user accounts is a stealthy way of creating backdoor accounts.</LikelihoodOfCompromise>
+      <MITREATTACK>Privilege Escalation</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>61</ID>
+      <CategoryID>2</CategoryID>
+      <Name>Computer Accounts in Privileged Groups</Name>
+      <Description>This indicator looks for computer accounts that are a member of built-in privileged groups.</Description>
+      <FilePath>Scripts\ComputersInPrivilegedGroup.ps1</FilePath>
+      <Weight>6</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>If a computer account is a member of a domain privileged group, then anyone that compromises that computer account (i.e. becomes administrator) can act as a member of that group. Generally speaking, there is little reason for normal computer accounts to be part of privileged groups.</LikelihoodOfCompromise>
+      <MITREATTACK>Privilege Escalation</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>62</ID>
+      <CategoryID>2</CategoryID>
+      <Name>Admins with old passwords</Name>
+      <Description>This indicator looks for admin accounts whose password has not changed in over 180 days. This could make these account ripe for password guessing attacks.</Description>
+      <FilePath>Scripts\oldPwdLastSetAdmin.ps1</FilePath>
+      <Weight>5</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>An administrator account whose password hasn't changed in a while could be a target for attackers looking for privileged accounts that can provide elevated access to the environment.</LikelihoodOfCompromise>
+      <MITREATTACK>Discovery</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>63</ID>
+      <CategoryID>3</CategoryID>
+      <Name>Domain controllers with passwords that have not changed in over 45 days</Name>
+      <Description>This indicator looks for domain controller machine accounts whose password has not been reset in over 45 days. By default, machine accounts including DCs, automatically reset their passwords every 30 days. Any machine accounts with passwords older than that could indicate a DC that is no longer functioning in the domain.</Description>
+      <FilePath>Scripts\CompOldPwdLastSetDC.ps1</FilePath>
+      <Weight>3</Weight>
+      <Severity>Informational</Severity>
+      <LikelihoodOfCompromise>A DC that is not updating its machine account password regularly could be more easily taken over. From an operational standpoint, it could also indicate a communication problem with the rest of the domain.</LikelihoodOfCompromise>
+      <MITREATTACK>Resource Development, Privilege Escalation</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>66</ID>
+      <CategoryID>5</CategoryID>
+      <Name>Domain controllers with resource-based constrained delegation</Name>
+      <Description>This indicator detects a configuration that grants certain accounts with complete delegation to domain controllers. Delegations towards privileged resources such as DCs should be avoided. Resource-based constrained delegation is configured on the target resource, as opposed to other delegation types that are configured on the accounts accessing the resource.</Description>
+      <FilePath>Scripts\RBCDOnDC.ps1</FilePath>
+      <Weight>6</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>An attacker needs to know the Service Principal Name (SPN) of the object they want to delegate, as well as be able to populate the msDS-AllowedToActOnBehalfOfOtherIdentity attribute with a computer account that they control. This is usually possible, as unprivileged users are by default allowed to create computer accounts (MachineAccountQuota) and write the attribute to the target computer.</LikelihoodOfCompromise>
+      <MITREATTACK>Privilege Escalation, Credential Access</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>67</ID>
+      <CategoryID>2</CategoryID>
+      <Name>Privileged accounts with a password that never expires</Name>
+      <Description>This indicator identifies privileged accounts (adminCount attribute set to 1) where the Password Never Expires flag is set.</Description>
+      <FilePath>Scripts\UsersPwdNeverExpiresAdmin.ps1</FilePath>
+      <Weight>6</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>User accounts whose passwords never expire are ripe targets for brute force password guessing. If these users are also administrative or privileged accounts, this makes them even more of a target.</LikelihoodOfCompromise>
+      <MITREATTACK>Privilege Escalation, Credential Access</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>68</ID>
+      <CategoryID>2</CategoryID>
+      <Name>Trust accounts with passwords that have not changed in over a year</Name>
+      <Description>This indicator looks for trust accounts whose password has not changed within the last year. This could mean that a trust relationship was removed but its corresponding trust account wasn't cleaned up.</Description>
+      <FilePath>Scripts\DomainControllerInconsistent.ps1</FilePath>
+      <Weight>3</Weight>
+      <Severity>Informational</Severity>
+      <LikelihoodOfCompromise>Trust accounts facilitate authentication across trusts. As such they should be protected just like privileged user accounts. Normally trust account passwords are rotated automatically so a trust account without a recent password change could indicate an orphaned trust account.</LikelihoodOfCompromise>
+      <MITREATTACK>Initial Access</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>69</ID>
+      <CategoryID>3</CategoryID>
+      <Name>Domain Controllers in inconsistent state</Name>
+      <Description>This indicator looks for Domain Controllers that may be in an inconsistent state, indicating a possible rogue or otherwise non-functional DC. DCs in a consistent state are characterized by the following: 1. useraccountcontrol attribute on the DC machine object has the SERVER_TRUST_ACCOUNT flag set. 2. A corresponding object of type server exists for the DC in the configuration partition. 3. That server object must have a child NTDS Settings object of type nTDSDSA.</Description>
+      <FilePath>Scripts\DomainControllerInconsistent.ps1</FilePath>
+      <Weight>3</Weight>
+      <Severity>Informational</Severity>
+      <LikelihoodOfCompromise>Illegitmate machines acting as DCs could indicate someone has compromised the enviornment (e.g. using DCShadow or similar DC spoofing attacks). At the very least, partially functional legitimate DCs could represent a security risk if they are compromised.</LikelihoodOfCompromise>
+      <MITREATTACK>Resource Development, Privilege Escalation</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>71</ID>
+      <CategoryID>5</CategoryID>
+      <Name>krbtgt account with Resource-Based Constrained Delegation (RBCD) enabled</Name>
+      <Description>It is possible to create a Kerberos delegation on the krbtgt account itself. Such a delegation to a user or computer would allow that principal to generate a Ticket Granting Service (TGS) request to the krbtgt account as any user, which has the effect of generating a Ticket Granting Ticket (TGT) similar to a Golden Ticket. This indicator looks for a krbtgt account that has Resource-Based Contrained Delegation (RBCD) defined.</Description>
+      <FilePath>Scripts\RBCDOnkrbtgt.ps1</FilePath>
+      <Weight>6</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>This type of attack should be easy to spot as no delegations should normally be created on the krbtgt account. However, if they are found, they would represent a significant risk and should be mitigated quickly.</LikelihoodOfCompromise>
+      <MITREATTACK>Privilege Escalation</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+    <Indicator>
+      <ID>72</ID>
+      <CategoryID>3</CategoryID>
+      <Name>gMSA objects with password last set over 90 days ago</Name>
+      <Description>This indicator looks for group managed service accounts that have not automatically rotated their passwords. These passwords should be changed automatically every 30 days by default.</Description>
+      <FilePath>Scripts\GMSAOldPwdLastSet.ps1</FilePath>
+      <Weight>6</Weight>
+      <Severity>Warning</Severity>
+      <LikelihoodOfCompromise>gMSA accounts should automatically rotate their passwords every 30 days, objects that are not doing this could show evidence of tampering.</LikelihoodOfCompromise>
+      <MITREATTACK>Credential Access</MITREATTACK>
+      <Selected>1</Selected>
+    </Indicator>
+  </Indicators>
+  <SATDescription>This report summarizes the Active Directory security assessment results performed by the Semperis Purple Knight tool. The assessment performed includes querying your Active Directory environment and running a series of security indicator scripts against domains in the selected forest (see appendix for full list of domains included). The report provides an overall risk score as well as detailed results about each Indicator of Exposure (IOE) found. This assessment represents opportunities for enhancing this Active Directory environment from a security perspective in accordance with industry best practices.</SATDescription>
+  <Risk>5</Risk>
+  <ScoringMethod><![CDATA[
+<div>
+    <p>The risk scores included in this report reveal the security posture of the Active Directory environment that was assessed. Risk scores are represented by percentage and letter grade. It is recommended to aim for the highest score possible; a 100% (A) risk score indicates that there were no Indicators of Exposure (IOEs) found for the security indicators that were assessed. The following explanation is intended to help you understand the scoring methodology and factors used to calculate the risk scores presented in this report.</p>
+    <h4 style="margin:15px 0;">Risk scores:</h4>
+    The Security Assessment report provides the following risk scores:
+<ul>
+    <li><strong>Security Indicator risk score:</strong> Each individual security indicator evaluated is assigned a score according to its internal logic and the results found. The individual security indicator score is assigned a weight (value between 1-10) according to the risk of the IOE found and the likelihood of compromise. This weighted score, together with a general factor of the industry risk, affects the score assigned to the relevant category.</li>
+    <li><strong>Category risk score:</strong>The security indicators included in the tool cover a range of categories that represent different aspects of Active Directory’s security posture. The category risk score is based on the test results and weight of each individual security indicator that was evaluated within the relevant category.</li>
+    <li><strong>Overall risk score:</strong> The overall risk score represents the weighted average of the category risk scores.
+    </li>
+</ul>
+<p>
+<strong>NOTE:</strong> When calculating the risk scores, only security indicators and categories included in the assessment are included (e.g., security indicators that passed and resulting in IOEs found). Security indicators that were not selected, cancelled, or failed to run are not taken into account. For an accurate assessment, it is recommended that you include all security indicators and all domains in the selected forest.
+</p>
+
+<h4>Scoring methods/factors:</h4>
+     <p><strong>Letter grading: </strong>Each score is assigned a suitable letter grade according to the following table:</p>
+        <div class="scoring-method-legend">
+        <div class="legend-item">
+            <div class="legend-grade grade-a"><span>A</span></div>
+            <span class="legend-range">90-100</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-grade grade-b">B</span>
+            <span class="legend-range">80-89</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-grade grade-c">C</span>
+            <span class="legend-range">70-79</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-grade grade-d">D</span>
+            <span class="legend-range">60-69</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-grade grade-f">F</span>
+            <span class="legend-range">0-59</span>
+        </div>
+    </div>
+
+
+    <p>
+        <strong>Risk factors:</strong> To determine the risk level of a particular security indicator, the following factors are taken into consideration:
+        <ul>
+            <li>Severity (Informational, Warning, Critical)</li>
+            <li>Likelihood of compromise</li>
+            <li>The DREAD Threat Probability Matrix</li>
+        </ul>
+    </p>
+
+   <p> DREAD Threat Probability Matrix</p>
+    <table style="border-collapse: collapse;
+    overview:hidden;
+    text-align: left;
+    border-radius: 5px;
+    border-style: hidden;
+    -webkit-box-shadow: inset 0 0 0 1px #cccccc;
+    box-shadow: inset 0 0 0 1px #cccccc;">
+        <thead>
+            <th width="130" style="background:#848484; border-right: solid 1px #ccc;"><strong>DREAD</strong></th>
+            <th width="168" style="background:#848484;border-right: solid 1px #ccc;"></th>
+            <th width="168" style="color:#fff;border-right: solid 1px #ccc;background:#ff0000;"><strong>High(3)</strong></th>
+            <th width="206" style="color:#fff;border-right: solid 1px #ccc;background:#ff8900;"><strong>Medium(2)</strong></th>
+            <th width="204" style="color:#fff;background:#59a31d;"><strong>Low(1)</strong> </th>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>D</strong>amage potential</td>
+                <td>How bad would the attack be?</td>
+                <td>Significant damage: The attacker can subvert the security system and gain full trust authorization.</td>
+                <td>Moderate damage: The attacker can access/leak sensitive information.</td>
+                <td>Minimal damage: The attacker can only access/leak trivial information.</td>
+            </tr>
+
+            <tr>
+                <td><strong>R</strong>eproducibility</td>
+                <td>How easy would it be to recreate the attack?</td>
+                <td>The attack can be consistently reproduced and does not require a specific timing window.</td>
+                <td>The attack can be reproduced, but only within a specific timing window and in a particular sequence.</td>
+                <td>The attack is very difficult to reproduce, even with knowledge of the security weakness/vulnerability.</td>
+            </tr>
+
+            <tr>
+                <td><strong>E</strong>xploitability</td>
+                <td>How easy would it be to launch the attack?</td>
+                <td>A novice programmer could perform the attack with minimal effort.</td>
+                <td>Requires a skilled programmer to launch the attack and be able to repeat the steps.</td>
+                <td>Requires an extremely skilled programmer with in-depth knowledge to launch an attack.</td>
+            </tr>
+
+            <tr>
+                <td><strong>A</strong>ffected users</td>
+                <td>How many users would be impacted?</td>
+                <td>A large percentage or all users are impacted;  default configuration and key customers are impacted.</td>
+                <td>A moderate percentage of users are impacted; non-default configuration is impacted.</td>
+                <td>A very small percentage of users are impacted; anonymous users are affected</td>
+            </tr>
+
+            <tr>
+                <td><strong>D</strong>iscoverability</td>
+                <td>How easy would it be for the attacker to discover this exposure?</td>
+                <td>Easily discovered. Published information explains the vulnerability and attack technique. The vulnerability is found in commonly used features and is very noticeable.</td>
+                <td>Would require some effort to discover and successfully exploit. The vulnerability is found in a seldomly-used part of the product and only a few users should discover it</td>
+                <td>Hard to discover. The issue is obscure, and it is unlikely that users would discover a way to cause damage.</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+]]></ScoringMethod>
+  <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
+    <SignedInfo>
+      <CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315" />
+      <SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1" />
+      <Reference URI="">
+        <Transforms>
+          <Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" />
+        </Transforms>
+        <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
+        <DigestValue>njxqrq8wXy//umULxGziwI/8eyY=</DigestValue>
+      </Reference>
+    </SignedInfo>
+    <SignatureValue>QNQvNBLMVZPYLrBdeJeTYwAPOsLxULGREztzb53sl8U4wnioQiz0czgOJmUguUDqVdxYQ+YwkB5qGFVsuPoqgBOYqDDUHgLlRF173y7TiCUHsRj2ncKi+XqpTEgPjKoiTPAa8md8kpk9ph2QkJllGUivaH6pEM9nrokspbbaNgE=</SignatureValue>
+  </Signature>
+</Configuration>
